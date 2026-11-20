@@ -35,3 +35,8 @@ for native delivery; supply a native resourceStore if carousel caching is needed
 
 The prepare script builds the SDK and declarations when installing a pinned Git
 commit. Consumers should pin a commit from the fork rather than a moving branch.
+
+Existing broadcaster navigation helpers can reject non-HTTP absolute URL strings.
+For those helpers, the runtime passes a document-relative path resolving to the
+already validated native destination. HTTP(S) destinations retain their absolute
+form; the helper still performs its own cleanup and navigation scheduling.

@@ -239,7 +239,11 @@ console.log('runtime application controller tests passed')
 
 {
   const calls = []
-  const nhksh = { lu(url) { calls.push(url); return true } }
+  const nhksh = { lu(url) {
+    if (!/^http|^\/[4567][012]\/|^\/sh[48]\/|^\.\.?\//.test(url)) return false
+    calls.push(url)
+    return true
+  } }
   const runtime = createRuntime({
     href: 'kiririn-mmt://app/data-broadcast/sh4/index.html',
     broadcastBaseUrl: 'kiririn-mmt://app/data-broadcast/',
@@ -247,8 +251,21 @@ console.log('runtime application controller tests passed')
   })
   runtime.controller.startDocument()
   assert.equal(nhksh.lu('./caption.html'), true)
-  assert.equal(calls[0], 'kiririn-mmt://app/data-broadcast/sh4/caption.html')
+  assert.equal(new URL(calls[0], runtime.target.location.href).href,
+    'kiririn-mmt://app/data-broadcast/sh4/caption.html')
+  assert.equal(nhksh.lu('./caption.html?x=1#subtitle'), true)
+  assert.equal(new URL(calls[1], runtime.target.location.href).href,
+    'kiririn-mmt://app/data-broadcast/sh4/caption.html?x=1#subtitle')
   for (const foreign of ['kiririn-mmt://other/page', 'other://app/page', 'https://outside.example/']) {
     assert.equal(nhksh.lu(foreign), false)
   }
+}
+
+{
+  const calls = []
+  const nhksh = { lu(url) { calls.push(url); return true } }
+  const runtime = createRuntime({ href: 'kiririn-mmt://app', nhksh })
+  runtime.controller.startDocument()
+  assert.equal(nhksh.lu('./next.html'), true)
+  assert.equal(new URL(calls[0], runtime.target.location.href).href, 'kiririn-mmt://app/next.html')
 }

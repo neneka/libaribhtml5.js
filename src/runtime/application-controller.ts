@@ -205,7 +205,13 @@ export class RuntimeApplicationController {
         this.reportBlockedNavigation(url)
         return false
       }
-      return navigate.call(nhksh, resolved.href, ...args)
+      // Broadcaster helpers may only accept HTTP absolute URLs or relative paths.
+      // Preserve their cleanup while resolving a checked native URL in the document.
+      const directoryDepth = Math.max(0, new URL(this.target.location.href).pathname.split('/').length - 2)
+      const helperUrl = /^https?:$/.test(resolved.protocol)
+        ? resolved.href
+        : `${'../'.repeat(directoryDepth) || './'}${resolved.pathname.slice(1)}${resolved.search}${resolved.hash}`
+      return navigate.call(nhksh, helperUrl, ...args)
     }
     nhksh.__navigationGuarded = true
   }
