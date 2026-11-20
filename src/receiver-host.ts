@@ -179,6 +179,9 @@ export class AribReceiverHost {
       this.ownerWindow.location.href,
       this.broadcastSchemes,
     )
+    if (this.origin === 'null') {
+      throw new TypeError('Broadcast documents require a non-opaque origin')
+    }
     if (!sameUrlOrigin(this.broadcastBaseUrl, this.ownerWindow.location.href)) {
       throw new Error(`Broadcast base URL must be same-origin: ${this.broadcastBaseUrl.href}`)
     }

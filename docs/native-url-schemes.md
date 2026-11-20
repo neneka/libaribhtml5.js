@@ -15,7 +15,9 @@ installRuntime(window, {
 
 `AribReceiverHost` accepts the same `broadcastSchemes` option. The base must
 share the document's scheme, hostname and port. Opaque origins are never compared
-by the string `null`. Reserved protocols such as file, data and javascript are
+by the string `null`. Runtime installation and receiver-host construction reject
+documents whose actual `location.origin` serializes to `null`; the native WebView
+must provide a non-opaque origin for its host-owned scheme. Reserved protocols such as file, data and javascript are
 not broadcast transports. Application navigation permits the document's own
 custom authority and retains its permission-boundary checks; opting in does not
 permit navigation to another custom scheme or hostname.

@@ -295,3 +295,18 @@ assert.equal(noWatchdogPlatform.timers.size, 0)
 noWatchdogHost.destroy()
 
 console.log('receiver session characterization tests passed')
+
+// A native transport must provide a real serialized origin for message checks.
+const opaqueHref = 'kiririn-mmt://app/data-broadcast/sh4/index.html'
+const { installRuntime } = await import('../src/runtime/install.ts')
+assert.throws(() => installRuntime({
+  location: { href: opaqueHref, origin: 'null' },
+  get document() { throw new Error('origin validation must precede DOM access') },
+}, { broadcastSchemes: ['kiririn-mmt'] }), /non-opaque origin/)
+const opaquePlatform = createHostPlatform()
+opaquePlatform.ownerWindow.location = { href: opaqueHref, origin: 'null' }
+assert.throws(() => new AribReceiverHost({
+  iframe: opaquePlatform.iframe,
+  viewport: opaquePlatform.viewport,
+  broadcastSchemes: ['kiririn-mmt'],
+}), /non-opaque origin/)

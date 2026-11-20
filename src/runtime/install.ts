@@ -169,6 +169,17 @@ export function installRuntime(target: RuntimeWindow, options: RuntimeOptions = 
 }
 
 function installRuntimeImplementation(target: RuntimeWindow, options: RuntimeOptions): void {
+  const broadcastBaseUrl = normalizeBroadcastBaseUrl(
+    options.broadcastBaseUrl,
+    target.location.href,
+    options.broadcastSchemes,
+  )
+  if (target.location.origin === 'null') {
+    throw new TypeError('Broadcast documents require a non-opaque origin')
+  }
+  if (!sameUrlOrigin(broadcastBaseUrl, target.location.href)) {
+    throw new Error(`Broadcast base URL must be same-origin: ${broadcastBaseUrl.href}`)
+  }
   // Apply feature-detection identity before the application can execute any
   // script. It belongs to the receiver host rather than a broadcaster profile.
   const restoreUserAgent = options.userAgent === undefined
@@ -178,14 +189,6 @@ function installRuntimeImplementation(target: RuntimeWindow, options: RuntimeOpt
   installRomSoundProtocol(target)
   installAribSymbolFont(target)
 
-  const broadcastBaseUrl = normalizeBroadcastBaseUrl(
-    options.broadcastBaseUrl,
-    target.location.href,
-    options.broadcastSchemes,
-  )
-  if (!sameUrlOrigin(broadcastBaseUrl, target.location.href)) {
-    throw new Error(`Broadcast base URL must be same-origin: ${broadcastBaseUrl.href}`)
-  }
   const broadcastRootUrl = deriveBroadcastRootUrl(target.location.href, broadcastBaseUrl)
   const resolveRuntimeUrl = (value: unknown) => {
     const documentRelative = new URL(String(value ?? ''), target.location.href)
