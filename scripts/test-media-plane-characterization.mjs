@@ -222,6 +222,17 @@ function runtimeScene(RuntimeMediaPlaneController) {
 async function runRuntimeMediaPlaneControllerContract(RuntimeMediaPlaneController) {
   {
     const scene = runtimeScene(RuntimeMediaPlaneController)
+    const authored = inlineStyleSnapshot(scene.object, 'opacity')
+    scene.controller.startDocument()
+    scene.target.flushAnimationFrames(16)
+    assert.equal(scene.object.style.getPropertyValue('opacity'), '0')
+    scene.controller.prepareBroadcastObjectReplacement()
+    assert.deepEqual(inlineStyleSnapshot(scene.object, 'opacity'), authored,
+      'object replacement must copy authored opacity rather than the native-video hole')
+    scene.controller.dispose('document-unload')
+  }
+  {
+    const scene = runtimeScene(RuntimeMediaPlaneController)
     scene.wrapper.computed.zIndex = '10'
     scene.overlay.computed.clipPath = 'none'
     scene.overlay.computed.borderRadius = '0px'

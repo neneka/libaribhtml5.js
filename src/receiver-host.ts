@@ -17,6 +17,7 @@ import {
 import {
   normalizeBroadcastBaseUrl,
   resolveBroadcastUrl,
+  sameUrlOrigin,
 } from './broadcast-url'
 import { dispatchReceiverKey } from './tv-input'
 import type {
@@ -97,6 +98,7 @@ export class AribReceiverHost {
   private readonly runtimeMediaPlaneAdapter?: AribMediaPlaneAdapter
   private readonly allowExternalNetwork: boolean
   private readonly broadcastBaseUrl: URL
+  private readonly broadcastSchemes: readonly string[]
   private readonly resourceStore?: BroadcastResourceStore
   private readonly onOpenProgramGuide?: AribProgramGuideHandler
   private readonly onCaptionSubscription?: (subscription: AribCaptionSubscription) => void
@@ -171,11 +173,13 @@ export class AribReceiverHost {
         }
       : undefined
     this.allowExternalNetwork = options.allowExternalNetwork ?? false
+    this.broadcastSchemes = [...(options.broadcastSchemes ?? [])]
     this.broadcastBaseUrl = normalizeBroadcastBaseUrl(
       options.broadcastBaseUrl,
       this.ownerWindow.location.href,
+      this.broadcastSchemes,
     )
-    if (this.broadcastBaseUrl.origin !== this.origin) {
+    if (!sameUrlOrigin(this.broadcastBaseUrl, this.ownerWindow.location.href)) {
       throw new Error(`Broadcast base URL must be same-origin: ${this.broadcastBaseUrl.href}`)
     }
     this.resourceStore = options.resourceStore
@@ -213,6 +217,7 @@ export class AribReceiverHost {
     installRuntime(target, {
       allowExternalNetwork: this.allowExternalNetwork,
       broadcastBaseUrl: this.broadcastBaseUrl.href,
+      broadcastSchemes: this.broadcastSchemes,
       resourceStore: this.resourceStore,
       mediaPlaneAdapter: this.runtimeMediaPlaneAdapter,
       now: () => this.getBroadcastTime(),
@@ -272,7 +277,7 @@ export class AribReceiverHost {
   loadApplication(url: string, status = 'アプリケーション読込中'): void {
     this.assertAlive()
     const resolved = resolveBroadcastUrl(url, this.broadcastBaseUrl)
-    if (resolved.origin !== this.origin) {
+    if (!sameUrlOrigin(resolved, this.ownerWindow.location.href)) {
       throw new Error(`External broadcast application URL is not allowed: ${resolved.href}`)
     }
     this.applicationExited = false
@@ -463,7 +468,7 @@ export class AribReceiverHost {
     try {
       const location = this.iframe.contentWindow?.location
       if (!location || location.href === 'about:blank') return
-      if (location?.origin === this.origin) {
+      if (sameUrlOrigin(location.href, this.ownerWindow.location.href)) {
         const loadedUrl = location.href
         // The injected bootstrap runs while the document is parsed. Let its
         // queued postMessage run first, then reject a loaded 404/error document

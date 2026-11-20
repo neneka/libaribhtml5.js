@@ -20,6 +20,7 @@ class FakeElement {
 
 function createRuntime({
   href = 'https://receiver.example/data-broadcast/app/index.html',
+  broadcastBaseUrl = 'https://receiver.example/data-broadcast/',
   application,
   allowExternalNetwork = false,
   resolveRuntimeUrl,
@@ -62,7 +63,7 @@ function createRuntime({
   const messages = []
   const controller = new RuntimeApplicationController({
     target,
-    broadcastBaseUrl: 'https://receiver.example/data-broadcast/',
+    broadcastBaseUrl,
     resolveRuntimeUrl: resolveRuntimeUrl ?? (value => new URL(String(value), target.location.href)),
     allowExternalNetwork,
     application,
@@ -235,3 +236,19 @@ function createRuntime({
 }
 
 console.log('runtime application controller tests passed')
+
+{
+  const calls = []
+  const nhksh = { lu(url) { calls.push(url); return true } }
+  const runtime = createRuntime({
+    href: 'kiririn-mmt://app/data-broadcast/sh4/index.html',
+    broadcastBaseUrl: 'kiririn-mmt://app/data-broadcast/',
+    nhksh,
+  })
+  runtime.controller.startDocument()
+  assert.equal(nhksh.lu('./caption.html'), true)
+  assert.equal(calls[0], 'kiririn-mmt://app/data-broadcast/sh4/caption.html')
+  for (const foreign of ['kiririn-mmt://other/page', 'other://app/page', 'https://outside.example/']) {
+    assert.equal(nhksh.lu(foreign), false)
+  }
+}

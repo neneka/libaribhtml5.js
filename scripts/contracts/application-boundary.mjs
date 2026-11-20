@@ -105,3 +105,13 @@ assert.throws(
   () => finiteBoundary.addPermissionManagedArea({ permission: undefined, urls: null }),
   error => error.code === 'INVALID_PARAM_ERR',
 )
+
+const customBoundary = new AribApplicationBoundaryPolicy(
+  'kiririn-mmt://app/data-broadcast/',
+  'kiririn-mmt://app/data-broadcast/sh4/index.html',
+  [{ permissionBitmaps: [bitmap1()], managedUrls: null }],
+)
+assert.equal(customBoundary.permits('kiririn-mmt://app/data-broadcast/sh4/data.json', ARIB_PERMISSION_BITS.cas), true)
+for (const foreign of ['kiririn-mmt://other/data-broadcast/sh4/data.json', 'other://app/data-broadcast/sh4/data.json']) {
+  assert.equal(customBoundary.permits(foreign, ARIB_PERMISSION_BITS.cas), false)
+}

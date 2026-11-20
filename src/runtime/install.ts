@@ -12,6 +12,7 @@ import {
   deriveBroadcastRootUrl,
   normalizeBroadcastBaseUrl,
   resolveBroadcastUrl,
+  sameUrlOrigin,
 } from '../broadcast-url'
 import {
   createBroadcastResourceCache,
@@ -68,6 +69,8 @@ export type RuntimeOptions = ReceiverCapabilitiesOptions & {
   allowExternalNetwork?: boolean
   /** Same-origin namespace where receiver-managed broadcast resources live. */
   broadcastBaseUrl?: string | URL
+  /** Additional hierarchical URL schemes served by a trusted native host. */
+  broadcastSchemes?: readonly string[]
   /** Optional Worker/cache bridge used by storeDataResource(). */
   resourceStore?: BroadcastResourceStore
   /** Bind the broadcast object to a browser, native, or compositor media plane. */
@@ -178,8 +181,9 @@ function installRuntimeImplementation(target: RuntimeWindow, options: RuntimeOpt
   const broadcastBaseUrl = normalizeBroadcastBaseUrl(
     options.broadcastBaseUrl,
     target.location.href,
+    options.broadcastSchemes,
   )
-  if (broadcastBaseUrl.origin !== target.location.origin) {
+  if (!sameUrlOrigin(broadcastBaseUrl, target.location.href)) {
     throw new Error(`Broadcast base URL must be same-origin: ${broadcastBaseUrl.href}`)
   }
   const broadcastRootUrl = deriveBroadcastRootUrl(target.location.href, broadcastBaseUrl)
@@ -418,6 +422,7 @@ function installRuntimeImplementation(target: RuntimeWindow, options: RuntimeOpt
     // The document-side bootstrap normally performs this replacement while
     // parsing.  Keep the runtime entry point authoritative as well, because
     // restored documents and direct host installs can skip that bootstrap.
+    mediaPlaneRuntime.prepareBroadcastObjectReplacement()
     replaceBroadcastObjects(target)
     applicationController.startDocument()
     // Static objects need their receiver API before application ready listeners run.

@@ -5,6 +5,7 @@ import {
   deriveBroadcastRootUrl,
   normalizeBroadcastBaseUrl,
   resolveBroadcastUrl,
+  sameUrlOrigin,
 } from '../../src/broadcast-url.ts'
 import { cloneProgramInfo, hasChangedPresentEvent } from '../../src/program-info.ts'
 import {
@@ -63,3 +64,25 @@ assert.equal(
   resolveBroadcastUrl('/data-broadcast/sh4/index.html', base).pathname,
   '/data-broadcast/sh4/index.html',
 )
+
+// Custom transports are opt-in and remain isolated even when URL.origin is null.
+const customDocument = 'kiririn-mmt://app/data-broadcast/sh4/40/001/startup/index.html'
+assert.throws(() => normalizeBroadcastBaseUrl(undefined, customDocument), /HTTP/)
+const customBase = normalizeBroadcastBaseUrl(undefined, customDocument, ['kiririn-mmt'])
+assert.equal(customBase.href, 'kiririn-mmt://app/data-broadcast/')
+const customRoot = deriveBroadcastRootUrl(customDocument, customBase)
+assert.equal(customRoot.href, 'kiririn-mmt://app/data-broadcast/sh4/')
+assert.equal(resolveBroadcastUrl('/60/002/caption/index.html', customBase, customRoot).href,
+  'kiririn-mmt://app/data-broadcast/sh4/60/002/caption/index.html')
+for (const foreign of ['kiririn-mmt://other/', 'other://app/', 'https://app/']) {
+  assert.equal(resolveBroadcastUrl(foreign, customBase, customRoot).href, foreign)
+  assert.equal(deriveBroadcastRootUrl(foreign, customBase).href, customBase.href)
+}
+for (const invalid of ['file:///tmp/', 'data:text/html,test', 'javascript:alert(1)', 'blob:null/test', 'kiririn-mmt:/no-host']) {
+  assert.throws(() => normalizeBroadcastBaseUrl(invalid, customDocument, ['kiririn-mmt', 'file', 'data', 'javascript', 'blob']))
+}
+
+assert.equal(sameUrlOrigin('kiririn-mmt://app:100/a', 'kiririn-mmt://app:101/a'), false)
+assert.equal(sameUrlOrigin('kiririn-mmt://app/a', 'other://app/a'), false)
+assert.equal(sameUrlOrigin('data:text/html,a', 'data:text/html,b'), false)
+assert.equal(sameUrlOrigin('https://receiver.example:443/a', 'https://receiver.example/b'), true)

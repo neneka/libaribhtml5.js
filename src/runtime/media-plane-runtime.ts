@@ -68,6 +68,11 @@ export class RuntimeMediaPlaneController {
       : null
   }
 
+  /** Restore authored styles before they are copied to replacement video elements. */
+  prepareBroadcastObjectReplacement(): void {
+    this.externalMediaHole.restore()
+  }
+
   /** Install APIs needed by static objects, prepare the canvas, and queue a report. */
   startDocument(): void {
     const object = this.findMediaObject()

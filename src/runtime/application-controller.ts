@@ -1,3 +1,4 @@
+import { sameUrlOrigin } from '../broadcast-url'
 import {
   ARIB_PERMISSION_BITS,
   AribApplicationBoundaryPolicy,
@@ -249,8 +250,9 @@ export class RuntimeApplicationController {
   private allowedNavigationUrl(value: unknown): URL | null {
     try {
       const url = this.resolveRuntimeUrl(value)
-      if (!/^https?:$/.test(url.protocol)) return null
-      if (url.origin !== this.target.location.origin && !this.allowExternalNetwork) return null
+      const sameOrigin = sameUrlOrigin(url, this.target.location.href)
+      if (!/^https?:$/.test(url.protocol) && !sameOrigin) return null
+      if (!sameOrigin && !this.allowExternalNetwork) return null
       return this.boundary.evaluate(url).withinBoundary ? url : null
     } catch {
       return null

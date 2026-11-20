@@ -1,3 +1,5 @@
+import { sameUrlOrigin } from '../broadcast-url.ts'
+
 export const ARIB_PERMISSION_BITS = {
   broadcastMedia: 12,
   monomediaOverBroadcastVideo: 11,
@@ -112,7 +114,7 @@ function permissionBits(bitmaps: readonly number[] | null): number {
 }
 
 function isBroadcastResource(url: URL, broadcastBaseUrl: URL): boolean {
-  return url.origin === broadcastBaseUrl.origin &&
+  return sameUrlOrigin(url, broadcastBaseUrl) &&
     url.pathname.startsWith(broadcastBaseUrl.pathname)
 }
 
@@ -127,7 +129,8 @@ function managedUrlSpecificity(
   } catch {
     return null
   }
-  if (!/^https?:$/.test(managed.protocol) || managed.origin !== candidate.origin) return null
+  if (!/^https?:$/.test(managed.protocol) && !sameUrlOrigin(managed, documentUrl)) return null
+  if (!sameUrlOrigin(managed, candidate)) return null
 
   const managedPath = managed.pathname.replace(/\/+$/, '') || '/'
   const candidatePath = candidate.pathname
@@ -137,7 +140,7 @@ function managedUrlSpecificity(
 
   // Any explicit domain is narrower than the all-location area. Within one
   // domain a longer sub-directory is the narrower permission setting.
-  return managed.origin.length + managedPath.length
+  return managed.protocol.length + managed.host.length + managedPath.length
 }
 
 export class AribApplicationBoundaryPolicy {

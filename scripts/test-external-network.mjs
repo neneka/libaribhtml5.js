@@ -14,7 +14,7 @@ class FakeRequest {
   }
 }
 
-function createTarget() {
+function createTarget(href = 'https://receiver.example/data/app/index.html') {
   const xhrCalls = []
   const fetchCalls = []
   const beaconCalls = []
@@ -44,8 +44,8 @@ function createTarget() {
 
   const target = {
     location: {
-      href: 'https://receiver.example/data/app/index.html',
-      origin: 'https://receiver.example',
+      href,
+      origin: new URL(href).origin,
     },
     XMLHttpRequest: FakeXMLHttpRequest,
     Request: FakeRequest,
@@ -132,3 +132,15 @@ function createTarget() {
 }
 
 console.log('external network policy tests passed')
+
+{
+  const { target, fetchCalls, xhrCalls } = createTarget('kiririn-mmt://app/data-broadcast/sh4/index.html')
+  installExternalNetworkPolicy(target, false)
+  assert.equal((await target.fetch('./local.json')).ok, true)
+  const request = new target.XMLHttpRequest()
+  request.open('GET', './local.json', true)
+  request.send()
+  assert.equal(xhrCalls.filter(([operation]) => operation === 'send').length, 1)
+  await assert.rejects(target.fetch('https://outside.example/'), /offline/)
+  assert.equal(fetchCalls.length, 1)
+}

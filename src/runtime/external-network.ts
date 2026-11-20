@@ -1,3 +1,5 @@
+import { sameUrlOrigin } from '../broadcast-url.ts'
+
 type ExternalNetworkTarget = Window & typeof globalThis
 
 /**
@@ -13,7 +15,7 @@ export function installExternalNetworkPolicy(
   const isExternalUrl = (value: unknown): boolean => {
     try {
       const url = new URL(String(value), target.location.href)
-      return /^https?:$/.test(url.protocol) && url.origin !== target.location.origin
+      return /^https?:$/.test(url.protocol) && !sameUrlOrigin(url, target.location.href)
     } catch {
       return false
     }

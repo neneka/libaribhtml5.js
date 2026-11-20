@@ -62,7 +62,8 @@
     "build:tv": "tsc --noEmit && node --experimental-strip-types scripts/test-tv-input.mjs && vite build --config vite.tv.config.mjs",
     "build:types": "tsc -p tsconfig.build.json && node scripts/rewrite-declaration-imports.mjs",
     "preview": "vite preview --host 127.0.0.1",
-    "prepack": "npm run build:sdk"
+    "prepack": "npm run build:sdk",
+    "prepare": "npm run build:sdk"
   },
   "devDependencies": {
     "typescript": "^5.8.0",

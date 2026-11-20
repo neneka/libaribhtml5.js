@@ -74,6 +74,8 @@ export type AribReceiverHostOptions = ReceiverCapabilitiesOptions & {
   allowExternalNetwork?: boolean
   /** Same-origin namespace where a Worker or HTTP server exposes carousel data. */
   broadcastBaseUrl?: string | URL
+  /** Additional hierarchical URL schemes served by a trusted native host. */
+  broadcastSchemes?: readonly string[]
   /** Optional bridge to a Service Worker, Cache Storage, or carousel VFS. */
   resourceStore?: BroadcastResourceStore
   /** Receiver/WebView bridge which opens the native EPG or a program detail page. */
